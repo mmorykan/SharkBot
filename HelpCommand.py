@@ -26,6 +26,9 @@ class HelpInfo:
         embed.add_field(name='$resume', value='Resumes the audio currently paused', inline=False)
         embed.add_field(name='$add', value='Adds a song to a queue and plays the first one immediately', inline=False)
         embed.add_field(name='$skip', value='Skips the song currently being played', inline=False)
+        embed.add_field(name='$replay', value='Replays the current song', inline=False)
+        embed.add_field(name='$shuffle', value='Shuffles the queue', inline=False)
+        embed.add_field(name='$now', value='Gets the currently playing song', inline=False)
         embed.add_field(name='$yoda', value='Play a quote from Yoda: \n'
                                             ' - 900 years old \n'
                                             ' - do or do not \n'
