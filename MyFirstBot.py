@@ -12,6 +12,7 @@ from TextAlert import send_message
 import giphy_client
 from giphy_client.rest import ApiException
 
+discord.opus.load_opus('/home/linuxbrew/.linuxbrew/Cellar/opus/1.3.1/lib/libopus.so')
 # number of characters across one line is 79
 bot = commands.Bot(command_prefix='$', description='The PS2 cheats sitting in your basement')
 bot.remove_command('help')
@@ -19,8 +20,6 @@ bot.remove_command('help')
 DISCORD_TOKEN = os.getenv('DISCORD_API_TOKEN')
 GIPHY_TOKEN = os.getenv('GIPHY_TOKEN')
 HOME = os.getenv('HOME')
-
-
 api_instance = giphy_client.DefaultApi()
 
 class Miscellaneous(commands.Cog):
@@ -116,6 +115,9 @@ class Music(commands.Cog):
 
         async with ctx.typing():
             player = await YTDLSource.from_url(ctx, url, loop=self.bot.loop, stream=True)
+            if not player:
+                sad = emoji.emojize(':sob:')
+                return await ctx.send(f'I cannot find that song! {sad}')
 
         correct_guild = self.get_correct_guild(ctx)
         try:
@@ -141,11 +143,11 @@ class Music(commands.Cog):
             sad = emoji.emojize(':disappointed:')
             await ctx.send(f'No song to replay {sad}')
 
+
     @commands.command()
     async def shuffle(self, ctx):
         if not await self.ensure_voice(ctx):
             return 
-
 
         correct_guild = self.get_correct_guild(ctx)
         sad = emoji.emojize(':disappointed:')
@@ -163,7 +165,7 @@ class Music(commands.Cog):
         if correct_guild.ctx.voice_client.is_playing():
             await correct_guild.currently_playing()
         else:
-            sad = emoji.emojize(':disappointed:')
+            sad = emoji.emojize(':disappointed:')  
             await ctx.send(f'There is no song playing {sad}')
 
     def get_correct_guild(self, ctx):
@@ -171,7 +173,6 @@ class Music(commands.Cog):
 
         try:
             correct_guild = self.players[ctx.guild.id]
-
         except KeyError:
             correct_guild = MusicPlayer(ctx)
             self.players[ctx.guild.id] = correct_guild
@@ -192,7 +193,11 @@ class Music(commands.Cog):
         if ctx.voice_client is not None:
             if ctx.author.voice:
                 if ctx.voice_client.channel != ctx.author.voice.channel:
-                    await ctx.author.voice.channel.connect()
+                    await self.cleanup(ctx.guild)
+                    try:
+                        await ctx.author.voice.channel.connect()
+                    except:
+                        pass
                 else:
                     if ctx.voice_client.is_playing() and inspect.stack()[1][3] != 'add' and inspect.stack()[1][3] != 'play' and inspect.stack()[1][3] != 'now' and inspect.stack()[1][3] != 'shuffle' and inspect.stack()[1][3] != 'replay':
                         ctx.voice_client.stop()
@@ -211,24 +216,30 @@ class Music(commands.Cog):
     async def connect(self, ctx):
         await self.connect_helper(ctx)
 
-    @classmethod
-    async def connect_helper(cls, ctx):
-#        discord.opus.load_opus('/usr/local/lib/libopus.dylib')   # Dont need this line on the pi
+    async def connect_helper(self, ctx):
+        discord.opus.load_opus('/home/linuxbrew/.linuxbrew/Cellar/opus/1.3.1/lib/libopus.so')   # Dont need this line on the pi
         gameboy = SoundClips(bot)
         if ctx.voice_client is not None:
             if ctx.author.voice:
                 if ctx.voice_client.channel != ctx.author.voice.channel:
-                    await ctx.voice_client.disconnect()
-                    await ctx.author.voice.channel.connect()
-                    await gameboy.on_join(ctx)
+                    await self.cleanup(ctx.guild)
+
+                    try:
+                        await ctx.author.voice.channel.connect()
+                        await gameboy.on_join(ctx)
+                    except:
+                        print('couldnt join 1')
                 else:
                     await ctx.send('Hey I\'m already connected')
             else:
                 await ctx.send('I cannot be summoned outside of a voice channel')
         else:
             if ctx.author.voice:
-                await ctx.author.voice.channel.connect()
-                await gameboy.on_join(ctx)
+                try:
+                    await ctx.author.voice.channel.connect()
+                    await gameboy.on_join(ctx)
+                except:
+                    print('Couldnt join 2')
             else:
                 await ctx.send('I cannot be summoned outside of a voice channel')
 
@@ -236,7 +247,7 @@ class Music(commands.Cog):
     async def disconnect(self, ctx):
         if ctx.voice_client is not None:
             if ctx.author.voice and ctx.voice_client.channel == ctx.author.voice.channel:
-                await ctx.voice_client.disconnect()
+                await self.cleanup(ctx.guild)
             else:
                 await self.not_same_channel(ctx)
         else:
@@ -251,16 +262,19 @@ class Music(commands.Cog):
         correct_guild = self.get_correct_guild(ctx)
         async with ctx.typing():
             source = await YTDLSource.from_url(ctx, url, loop=self.bot.loop, stream=True)
+            if not source:
+                sad = emoji.emojize(':sob:')
+                return await ctx.send(f'I cannot find that song! {sad}')
+
         try:
             correct_guild.queue.put_nowait((correct_guild.add_queue_counter, source))
         except asyncio.QueueEmpty:
             await self.maxsized_queue(ctx)
             return
+
         correct_guild.add_queue_counter += 1
         if correct_guild.current_song:
             await correct_guild.display_song_message(source, ctx.author.name)
-
-        print('did it')
 
 
     @commands.command()
@@ -299,6 +313,7 @@ class Music(commands.Cog):
         else:
             await self.not_same_channel(ctx)
 
+
     @commands.command()
     async def resume(self, ctx):
         if ctx.voice_client is not None:
@@ -312,25 +327,29 @@ class Music(commands.Cog):
         else:
             await self.not_same_channel(ctx)
 
+
     @commands.command()
     async def volume(self, ctx, volume: float=10.0):
 
         if ctx.voice_client is not None:
             if ctx.author.voice and ctx.voice_client.channel == ctx.author.voice.channel:
-                if 0 <= volume <= 100:
-                    ctx.voice_client.source.volume = volume / 100
-                    await ctx.send(f'Changed volume to {volume}')
+                if ctx.voice_client.is_playing():
+                    if 0 <= volume <= 100:
+                        ctx.voice_client.source.volume = volume / 100
+                        await ctx.send(f'Changed volume to {volume}')
+                    else:
+                        await ctx.send('My volume level must be between 0 and 100')
                 else:
-                    await ctx.send('My volume level must be between 0 and 100')
+                    await ctx.send('I am not playing anything yet!')
             else:
                 await self.not_same_channel(ctx)
         else:
             await ctx.send('I am not connected to this channel. Try using $connect or $play from within a voice channel')
 
+
     async def cleanup(self, guild):
         try:
             await guild.voice_client.disconnect()
-
         except AttributeError:
             pass
         try:
@@ -352,14 +371,9 @@ class SoundClips(commands.Cog):
 
 
     async def find_files(self, ctx, query):
-        print('i made it here')
         folder_name = (inspect.stack()[1][3]).title()
-        print(folder_name)
-        for filename in glob.glob(f'{os.sep}home{os.sep}pi{os.sep}SoundClips{os.sep}{folder_name}{os.sep}*'): # This will be the path of the files on the pi
-            print('inside loop')
-            print(filename)
+        for filename in glob.glob(f'{os.sep}home{os.sep}ec2-user{os.sep}SoundClips{os.sep}{folder_name}{os.sep}*'): # This will be the path of the files on the pi
             if ''.join(query.lower().split()) in filename.lower()[filename.rfind(os.sep):]: 
-                print(filename)
                 return filename
 
         await ctx.send('I don\'t have that quote' + emoji.emojize(':sob:'))
@@ -442,9 +456,9 @@ class SoundClips(commands.Cog):
 
     @classmethod
     async def on_join(cls, ctx):
-        source = '/home/pi/SoundClips/GameboyStartup.m4a'    #Path to file on Raspberry pi
+        source = '/home/ec2-user/SoundClips/GameboyStartup.m4a'    #Path to file on Raspberry pi
         player = discord.PCMVolumeTransformer(
-            discord.FFmpegPCMAudio(source))  # executable='/Users/morykanm@moravian.edu/Downloads/ffmpeg/bin/ffmpeg'))
+            discord.FFmpegPCMAudio(source, executable='/home/linuxbrew/.linuxbrew/Cellar/ffmpeg/4.3_2/bin/ffmpeg'))
 
         ctx.voice_client.play(player)
 
@@ -456,7 +470,7 @@ class SoundClips(commands.Cog):
 
 
         source = discord.PCMVolumeTransformer(
-            discord.FFmpegPCMAudio(filename))   # executable='/Users/morykanm@moravian.edu/Downloads/ffmpeg/bin/ffmpeg'))
+            discord.FFmpegPCMAudio(filename, executable='/home/linuxbrew/.linuxbrew/Cellar/ffmpeg/4.3_2/bin/ffmpeg'))
         ctx.voice_client.play(source)
 
 
@@ -466,19 +480,22 @@ async def on_member_join(member):
     for channel in member.guild.channels:
         if channel.name == 'general':
             exclaim = emoji.emojize(':exclamation:')
-            await channel.send(f'Welcome {member.name.mention}{exclaim}')
+            await channel.send(f'Welcome {member.name}{exclaim}')
             break
 
 @bot.event
 async def on_guild_join(guild):
-    send_message(f'SharkBot has joined {guild}!')
+    try:
+        send_message(f'SharkBot has joined {guild}!')
+    except:
+        pass
 
 
 @bot.event
 async def on_member_ban(guild, user):
     for channel in guild.channels:
         if channel.name == 'general':
-            await channel.send(f'Ha! What a loser {user.name.mention}')
+            await channel.send(f'Ha! What a loser {user.name}')
             break
 
 ##### Add the guild join event and text me when it happens #####

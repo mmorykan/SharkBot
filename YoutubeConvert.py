@@ -37,7 +37,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
         super().__init__(source, volume)
 
         self.data = data
-
         self.title = data.get('title')
         self.url = data.get('url')
         self.requester = requester
@@ -48,35 +47,25 @@ class YTDLSource(discord.PCMVolumeTransformer):
         """This gets a playable audio source to stream from Youtube"""
 
         loop = loop or asyncio.get_event_loop()
-        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
+        try:
+            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
+        except:
+            return
 
         if 'entries' in data:
             # take first item from a playlist
             data = data['entries'][0]
         filename = data['url'] if stream else ytdl.prepare_filename(data)
+        
         # To access duration of videos, use data['duration']
-
         return cls(discord.FFmpegPCMAudio(
             filename,
             before_options=ffmpeg_options['before_options'],
-            options=ffmpeg_options['options']),
-           # executable='/Users/morykanm@moravian.edu/Downloads/ffmpeg/bin/ffmpeg'),
+            options=ffmpeg_options['options'],
+            executable='/home/linuxbrew/.linuxbrew/Cellar/ffmpeg/4.3_2/bin/ffmpeg'),
             data=data,
             requester=ctx.author.name)
 
-
-    @classmethod
-    async def regather_stream(cls, data, *, loop):
-        """Because Youtube links expire, we regather the streaming information
-        in case the song has been queued for a while"""
-        print(data)
-        loop = loop or asyncio.get_event_loop()
-        # requester = data['requester'].split('#')[0]  # To get username without discriminator
-
-        to_run = partial(ytdl.extract_info, url=data['webpage_url'], download=False)
-        data = await loop.run_in_executor(None, to_run)
-
-        return cls(discord.FFmpegPCMAudio(data['url']), data=data)
 
     # def clone(ytdl_object):
     #     return YTDLSource(self.source, self.data, self.volume, self.requester)

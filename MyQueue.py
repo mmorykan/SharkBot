@@ -8,11 +8,6 @@ from YoutubeConvert import YTDLSource
 
 
 class MusicPlayer:
-    """
-    Might have to regather the stream if a song has been sitting in the queue for too long.
-    1. Replay command
-    2. Shuffle command
-    """
 
     def __init__(self, ctx):
         self.ctx = ctx
@@ -36,11 +31,13 @@ class MusicPlayer:
             self.current_song = None
             try:
                 async with timeout(600):
+                    print('getting next song')
                     self.current_song = (await self.queue.get())[1]
+                    print('got the song')
             except asyncio.TimeoutError:
+                print('destroying queue')
                 return await self.destroy()
-
-            # Might have to regather the stream if the song has been sitting in the queue for a while
+            
             self.ctx.voice_client.play(self.current_song, after=lambda _: self.toggle_next())
             self.ctx.voice_client.source.volume = self.volume / 100
             await self.display_song_message(self.current_song, self.current_song.requester)
@@ -82,8 +79,7 @@ class MusicPlayer:
         try:
             self.queue.put_nowait((self.play_next_queue_counter, player))
         except asyncio.QueueFull:
-            await self.ctx.send('Too many items queued!\nCannot replay this song')
-            return
+            return await self.ctx.send('Too many items queued!\nCannot replay this song')
 
         self.play_next_queue_counter -= 1
         await self.display_song_message(player, self.ctx.author.name)
@@ -100,6 +96,7 @@ class MusicPlayer:
         for priority,player in enumerate(list_of_players):
             track = (random_priorities[priority], player[1])
             self.queue.put_nowait(track)
+        await self.ctx.send('Queue successfully shuffled!')
 
 
     async def currently_playing(self):
