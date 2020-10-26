@@ -5,6 +5,8 @@ import emoji
 import random
 import inspect
 from YoutubeConvert import YTDLSource
+from ffmpegPlay import FFmpegPCMAudio, PCMVolumeTransformer
+import io
 
 
 class MusicPlayer:
@@ -37,10 +39,26 @@ class MusicPlayer:
             except asyncio.TimeoutError:
                 print('destroying queue')
                 return await self.destroy()
+
+            buffer = io.BytesIO()
+            self.current_song['song'].stream_to_buffer(buffer)
+            source = FFmpegPCMAudio(buffer.getvalue(),  # seventh one cannot allocate memory
+                                    # before_options=ffmpeg_options['before_options'],
+                                    executable='/home/linuxbrew/.linuxbrew/Cellar/ffmpeg/4.3_2/bin/ffmpeg',
+                                    pipe=True
+                                    # options=ffmpeg_options['options']
+                                    )
+            player = PCMVolumeTransformer(source, requester=self.current_song['requester'], title=self.current_song['title'], duration=self.current_song['duration'], url=self.current_song['url'])
+            if not player:
+                sad = emoji.emojize(':sob:')
+                return await ctx.send(f'I cannot find that song! {sad}')
+
             
-            self.ctx.voice_client.play(self.current_song, after=lambda _: self.toggle_next())
+            # self.ctx.voice_client.play(self.current_song, after=lambda _: self.toggle_next())
+            self.ctx.voice_client.play(player, after=lambda _: self.toggle_next())
             self.ctx.voice_client.source.volume = self.volume / 100
-            await self.display_song_message(self.current_song, self.current_song.requester)
+            # await self.display_song_message(self.current_song, self.current_song.requester)
+            await self.display_song_message(player.title, player.requester, player.duration, player.url)
             await self.play_next_song.wait()
 
 
@@ -48,7 +66,7 @@ class MusicPlayer:
         self.bot.loop.call_soon_threadsafe(self.play_next_song.set)
 
 
-    async def display_song_message(self, song, username):
+    async def display_song_message(self, title, username, duration, url):
         notes = emoji.emojize(':notes:')
         song_status = ['Now playing: ', 'Requested by: ']
         if inspect.stack()[1][3] == 'skip':
@@ -59,8 +77,10 @@ class MusicPlayer:
             song_status = ['Queued in front: ', 'Queued by: ']
         elif inspect.stack()[1][3] == 'replay':
             song_status = ['Replay: ', 'Requested by: ']
-        embed = discord.Embed(title=f'{notes}{song_status[0]}{song.title}{notes}', color=0x0000CD)
-        embed.add_field(name=song_status[1], value=f'{username}', inline=False)
+        embed = discord.Embed(title=f'{notes}{song_status[0]}{title}{notes}', color=0x0000CD)
+        embed.add_field(name=song_status[1], value=f'{username}', inline=True)
+        embed.add_field(name='Duration:', value=duration, inline=True)
+        embed.add_field(name='YouTube URL:', value=url, inline=False)
         await self.ctx.send(embed=embed)
 
 
@@ -75,14 +95,15 @@ class MusicPlayer:
         Need to make a copy of the current song since x is a reference to it
         """
         # Used to create a copy of the youtube object
-        player = await YTDLSource.from_url(self.ctx, self.current_song.url, loop=self.bot.loop, stream=True)
+        # player = await YTDLSource.from_url(self.ctx, self.current_song.url, loop=self.bot.loop, stream=True)
+        player = self.current_song
         try:
             self.queue.put_nowait((self.play_next_queue_counter, player))
         except asyncio.QueueFull:
             return await self.ctx.send('Too many items queued!\nCannot replay this song')
 
         self.play_next_queue_counter -= 1
-        await self.display_song_message(player, self.ctx.author.name)
+        await self.display_song_message(self.current_song['title'], self.current_song['requester'], self.current_song['duration'], self.current_song['url'])
 
 
     async def shuffle(self):
@@ -100,4 +121,4 @@ class MusicPlayer:
 
 
     async def currently_playing(self):
-        await self.display_song_message(self.current_song, self.ctx.author.name)
+        await self.display_song_message(self.current_song['title'], self.current_song['requester'], self.current_song['duration'], self.current_song['url'])

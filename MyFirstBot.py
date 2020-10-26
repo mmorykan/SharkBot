@@ -5,12 +5,16 @@ import os
 import glob
 import inspect
 import emoji
-from YoutubeConvert import YTDLSource
+from ffmpegPlay import FFmpegPCMAudio, PCMVolumeTransformer
 from MyQueue import MusicPlayer
 from HelpCommand import HelpInfo
 from TextAlert import send_message
 import giphy_client
 from giphy_client.rest import ApiException
+from pytube import YouTube
+from youtubesearchpython import SearchVideos
+import io
+
 
 discord.opus.load_opus('/home/linuxbrew/.linuxbrew/Cellar/opus/1.3.1/lib/libopus.so')
 # number of characters across one line is 79
@@ -21,6 +25,7 @@ DISCORD_TOKEN = os.getenv('DISCORD_API_TOKEN')
 GIPHY_TOKEN = os.getenv('GIPHY_TOKEN')
 HOME = os.getenv('HOME')
 api_instance = giphy_client.DefaultApi()
+
 
 class Miscellaneous(commands.Cog):
 
@@ -113,22 +118,46 @@ class Music(commands.Cog):
         if not await self.ensure_voice(ctx):
             return
 
+        # ffmpeg_options = {
+        #     # 'before_options': ' -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+        #     'options': '-vn'
+        # }
+
         async with ctx.typing():
-            player = await YTDLSource.from_url(ctx, url, loop=self.bot.loop, stream=True)
-            if not player:
+            search_results = SearchVideos(url, mode="dict", max_results = 5).result()
+            print('search result:', search_results)
+            result = search_results['search_result']
+            if not result:
                 sad = emoji.emojize(':sob:')
                 return await ctx.send(f'I cannot find that song! {sad}')
 
+            while result and result[0]['duration'] == 'LIVE':
+                result.pop(0)
+
+            if not result:
+                sad = emoji.emojize(':sob:')
+                return await ctx.send(f'I cannot find that song! {sad}')
+
+            link = result[0]['link']
+            print('link:', link)
+            yt = YouTube(link)   # Get yt player config could not match pattern for song
+            # JSON decode error unterminated string starting at line 1
+
+            song = yt.streams.filter(only_audio=True).first()
+            # player = await YTDLSource.from_url(ctx, url, loop=self.bot.loop, stream=True)
+
         correct_guild = self.get_correct_guild(ctx)
         try:
-            correct_guild.queue.put_nowait((correct_guild.play_next_queue_counter, player))
+            # correct_guild.queue.put_nowait((correct_guild.play_next_queue_counter, player))
+            data = {'song': song, 'requester': ctx.author.name, 'title': yt.title, 'duration': result[0]['duration'],'url': link}
+            correct_guild.queue.put_nowait((correct_guild.play_next_queue_counter, data))
         except asyncio.QueueFull:
             await self.maxsized_queue(ctx)
             return
 
         correct_guild.play_next_queue_counter -= 1
         if correct_guild.current_song:
-            await correct_guild.display_song_message(player, player.requester)
+            await correct_guild.display_song_message(data['title'], data['requester'], data['duration'], data['url'])
 
 
     @commands.command()
@@ -203,6 +232,7 @@ class Music(commands.Cog):
                         ctx.voice_client.stop()
             else:
                 await self.not_same_channel(ctx)
+                flag = False
         else:
             if ctx.author.voice:
                 await ctx.author.voice.channel.connect()
@@ -259,22 +289,46 @@ class Music(commands.Cog):
         if not await self.ensure_voice(ctx):
             return
 
+        ffmpeg_options = {
+            # 'before_options': ' -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+            'options': '-vn'
+        }
+
         correct_guild = self.get_correct_guild(ctx)
         async with ctx.typing():
-            source = await YTDLSource.from_url(ctx, url, loop=self.bot.loop, stream=True)
-            if not source:
+            # source = await YTDLSource.from_url(ctx, url, loop=self.bot.loop, stream=True)
+            search_results = SearchVideos(url, mode="dict", max_results = 5).result()
+            print('search result:', search_results)
+            result = search_results['search_result']
+            if not result:
                 sad = emoji.emojize(':sob:')
                 return await ctx.send(f'I cannot find that song! {sad}')
 
+            while result and result[0]['duration'] == 'LIVE':
+                result.pop(0)
+
+            if not result:
+                sad = emoji.emojize(':sob:')
+                return await ctx.send(f'I cannot find that song! {sad}')
+
+            link = result[0]['link']
+            print('link:', link)
+            yt = YouTube(link)   # Get yt player config could not match pattern for song
+            # JSON decode error unterminated string starting at line 1
+
+            song = yt.streams.filter(only_audio=True).first()
+            # player = await YTDLSource.from_url(ctx, url, loop=self.bot.loop, stream=True)
+
         try:
-            correct_guild.queue.put_nowait((correct_guild.add_queue_counter, source))
+            data = {'song': song, 'requester': ctx.author.name, 'title': yt.title, 'duration': result[0]['duration'],'url': link}
+            correct_guild.queue.put_nowait((correct_guild.add_queue_counter, data))
         except asyncio.QueueEmpty:
             await self.maxsized_queue(ctx)
             return
 
         correct_guild.add_queue_counter += 1
         if correct_guild.current_song:
-            await correct_guild.display_song_message(source, ctx.author.name)
+            await correct_guild.display_song_message(data['title'], data['requester'], data['duration'], data['url'])
 
 
     @commands.command()
@@ -291,7 +345,7 @@ class Music(commands.Cog):
                         if correct_guild.current_song:
                             current_song = correct_guild.current_song
                             ctx.voice_client.stop()
-                            await correct_guild.display_song_message(current_song, ctx.author.name)
+                            await correct_guild.display_song_message(current_song['title'], ctx.author.name, current_song['duration'], current_song['url'])
                         else:
                             ctx.voice_client.stop()
                     else:
@@ -468,6 +522,11 @@ class SoundClips(commands.Cog):
         if not await temp.ensure_voice(ctx) or filename is None:
             return
 
+        try:
+            if ctx.voice_client.is_paused():
+                temp.cleanup(temp.get_correct_guild(ctx))
+        except:
+            pass
 
         source = discord.PCMVolumeTransformer(
             discord.FFmpegPCMAudio(filename, executable='/home/linuxbrew/.linuxbrew/Cellar/ffmpeg/4.3_2/bin/ffmpeg'))
