@@ -8,6 +8,7 @@ from HelpCommand import HelpInfo
 from Miscellaneous import Miscellaneous
 from Music import Music
 from SoundClips import SoundClips
+from TextAlert import send_message
 
 
 # Create the bot and remove default help command
@@ -70,6 +71,19 @@ async def on_member_ban(guild, user):
         if channel.name == 'general':
             await channel.send(f'Ha! What a loser {user.name.mention}')
             break
+
+@bot.event
+async def on_guild_join(guild):
+    """
+    Texts my cell phone when SharkBot is invited into a new guild.
+    :param guild: The guild that SharkBot was invited to
+    :type guild: discord.Guild
+    """
+    try:
+        send_message(f'SharkBot has joined {guild}!')
+    except:
+        pass
+
 
 
 @bot.event
