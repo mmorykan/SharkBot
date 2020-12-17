@@ -72,6 +72,7 @@ async def on_member_ban(guild, user):
             await channel.send(f'Ha! What a loser {user.name.mention}')
             break
 
+
 @bot.event
 async def on_guild_join(guild):
     """
@@ -83,7 +84,6 @@ async def on_guild_join(guild):
         send_message(f'SharkBot has joined {guild}!')
     except:
         pass
-
 
 
 @bot.event
