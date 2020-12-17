@@ -1,0 +1,6 @@
+ffmpeg
+giphy_client
+discord.py[voice]
+emoji
+youtube_dl
+python-dotenv
