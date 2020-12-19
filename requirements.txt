@@ -5,3 +5,4 @@ emoji
 youtube_dl
 python-dotenv
 twilio
+opuslib

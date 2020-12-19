@@ -52,7 +52,6 @@ class MusicPlayer:
                 return await self.destroy()  # Deletes current instance
 
             self.ctx.voice_client.play(self.current_song, after=self.toggle_next)  # After is called after each song
-            self.ctx.voice_client.source.volume = 0.5
             await self.display_song_message(['Now playing: ', 'Requested by: '])
             await self.play_next_song.wait()  # Make the loop wait until set is called in toggle_next, after the song has finished
 

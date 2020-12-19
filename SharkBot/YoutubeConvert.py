@@ -60,10 +60,12 @@ class YTDLSource(discord.PCMVolumeTransformer):
         """
 
         data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
-        if 'entries' in data:  # take first item from a playlist
-            data = data['entries'][0]
-        filename = data['url'] if stream else ytdl.prepare_filename(data)
+        if 'entries' in data:  # Enter if url is a search query instead of an address
+            while not data['entries']:  # entries field contains the url. Sometimes entries list is empty. Loop until not empty
+                data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
+            data = data['entries'][0]  # Gets first song
 
+        filename = data['url'] if stream else ytdl.prepare_filename(data)
         return cls(discord.FFmpegPCMAudio(
             filename,
             before_options=ffmpeg_options['before_options'],

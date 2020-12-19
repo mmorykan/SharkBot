@@ -26,11 +26,11 @@ class SoundClips(commands.Cog):
         :returns: The path to the queried audio file if found
         :rtype: str or None
         """
+
         folder_path = '../SoundClips/' + folder_name
         for filename in os.listdir(folder_path):
             clip_name = ''.join(query.lower().split())
             if clip_name in filename.lower():
-                print(filename)
                 return folder_path + '/' + filename
 
 
@@ -113,7 +113,8 @@ class SoundClips(commands.Cog):
         :param filename: The name of the file to play. Typically a .mp3 file.
         :type filename: str or None
         """
-        temp = Music(self.bot)
-        if await temp.ensure_voice(ctx) and filename:
-            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(filename))
+
+        music = Music(self.bot)
+        if await music.ensure_voice(ctx) and filename:
+            source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(filename), volume=0.5)
             ctx.voice_client.play(source)
