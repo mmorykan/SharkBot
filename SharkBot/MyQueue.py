@@ -60,7 +60,7 @@ class MusicPlayer:
         Sets the asyncio event so that the loop is no longer waiting for the song to finish
         :param error: Paramater to be raised if an exception occurs within the play function
         :type error: Exception
-        """         
+        """
 
         self.bot.loop.call_soon_threadsafe(self.play_next_song.set)
 
@@ -92,7 +92,7 @@ class MusicPlayer:
     async def destroy(self):
         """Disconnect voice client and delete this current instance."""
 
-        await self.ctx.cog.cleanup(self.ctx)
+        await self.ctx.cog.cleanup(self.ctx) 
 
     async def shuffle(self):
         """
@@ -136,7 +136,7 @@ class MusicPlayer:
         try:
             self.queue.put_nowait(item)
         except asyncio.QueueFull:
-            return await self.ctx.send(f'I cannot queue more than {correct_guild.queue.maxsize} songs')
+            return await self.ctx.send(f'I cannot queue more than {self.queue.maxsize} songs')
 
         # Update list and counters
         if front:

@@ -117,4 +117,12 @@ class SoundClips(commands.Cog):
         music = Music(self.bot)
         if await music.ensure_voice(ctx) and filename:
             source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(filename), volume=0.5)
+            queue = music.players.get(ctx.guild.id)
+            if queue:
+                del music.players[ctx.guild.id]
+            if ctx.voice_client.is_playing():
+                ctx.voice_client.stop()
             ctx.voice_client.play(source)
+
+    async def cleanup(self, ctx):        
+        await ctx.voice_client.disconnect()
