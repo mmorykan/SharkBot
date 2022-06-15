@@ -105,7 +105,7 @@ class SoundClips(commands.Cog):
 
     @commands.command()
     async def birthday(self, ctx):
-        await ctx.send('HAPPY BIRTHDAY!!', tts=True)
+        await ctx.send('HAPPY BIRTHDAY LIL REY!!', tts=True)
 
     async def play_quotes(self, ctx, filename):
         """
