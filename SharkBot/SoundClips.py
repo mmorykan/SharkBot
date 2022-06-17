@@ -1,7 +1,6 @@
 import os
-from discord import FFmpegPCMAudio
+from discord import FFmpegPCMAudio, PCMVolumeTransformer
 from Music import Music
-from YoutubeConvert import YTDLSource
 
 
 class SoundClips():
@@ -47,6 +46,6 @@ class SoundClips():
         """
 
         await self.music.connect(ctx)
-        data = {'requester': ctx.author.name, 'title': file_.rsplit(os.sep)[-1], 'duration': 0, 'webpage_url': None}
-        source = YTDLSource(FFmpegPCMAudio(file_), data, self.music.get_correct_guild(ctx).volume)
+        source = PCMVolumeTransformer(FFmpegPCMAudio(file_), self.music.get_correct_guild(ctx).volume)
+        setattr(source, 'data', {'requester': ctx.author.name, 'title': file_.rsplit(os.sep)[-1], 'duration': 0, 'webpage_url': None})
         await self.music.add_to_queue(ctx, source, ['Queued in front: ', 'Queued by: '], True)
