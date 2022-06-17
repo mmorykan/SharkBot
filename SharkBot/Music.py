@@ -62,15 +62,16 @@ class Music:
 
             return setup
         return check_voice_inner
-        
+
     @check_voice('No song to replay')
     async def replay(self, **kwargs):
         """Replay the currently playing song by pushing the same player back into the front of the queue"""
 
         ctx, guild = kwargs['ctx'], kwargs['guild']
-        if guild.get_current_song():  # Cannot replay quotes
+        current_song = guild.get_current_song()
+        if current_song:  # Cannot replay quotes
             async with ctx.typing():
-                source = await YTDLSource.from_url(ctx, guild.current_song.data['webpage_url'], guild.volume)
+                source = await YTDLSource.from_url(ctx, current_song.data['webpage_url'], guild.volume)
                 await self.add_to_queue(ctx, source, ['Replay: ', 'Requested by: '], True)
             return True
         return False
