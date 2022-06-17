@@ -5,7 +5,7 @@ from SoundClips import SoundClips
 class SoundClipsCommands(commands.Cog):
     """
     Plays a file from the local filesystem
-    Commands (all take one argument, the search query): 
+    Commands (all quotes take one argument, the search query): 
         yoda, ewok, chewbacca, jabba, leia, hansolo, roshi,
         oogway, sid, shifu, chunk, docholiday, kuzco, majorpayne,
         birthday
