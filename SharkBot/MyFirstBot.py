@@ -3,10 +3,10 @@ import os
 from dotenv import load_dotenv, find_dotenv
 import emoji
 from discord.ext import commands
-from HelpCommand import HelpInfo
-from MiscellaneousCommands import MiscellaneousCommands
-from MusicCommands import MusicCommands
-from SoundClipsCommands import SoundClipsCommands
+from Commands.HelpCommand import HelpInfo
+from Commands.MiscellaneousCommands import MiscellaneousCommands
+from Commands.MusicCommands import MusicCommands
+from Commands.SoundClipsCommands import SoundClipsCommands
 from TextAlert import send_message
 
 

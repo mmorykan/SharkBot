@@ -55,9 +55,8 @@ class Music:
             async def setup(self, ctx, volume=None):
                 if self.in_correct_voice_state(ctx):
                     if not await queue_function(self, ctx=ctx, guild=self.get_correct_guild(ctx), volume=volume):
-                        async with ctx.typing():
-                            sad = emoji.emojize(':disappointed:')  
-                            await ctx.send(f'{error_msg}{sad}')
+                        sad = emoji.emojize(':disappointed:')  
+                        await ctx.send(f'{error_msg}{sad}')
                 else:
                     await self.not_same_channel(ctx)
 
@@ -69,7 +68,7 @@ class Music:
         """Replay the currently playing song by pushing the same player back into the front of the queue"""
 
         ctx, guild = kwargs['ctx'], kwargs['guild']
-        if guild.get_current_song():
+        if guild.get_current_song():  # Cannot replay quotes
             async with ctx.typing():
                 source = await YTDLSource.from_url(ctx, guild.current_song.data['webpage_url'], guild.volume)
                 await self.add_to_queue(ctx, source, ['Replay: ', 'Requested by: '], True)
