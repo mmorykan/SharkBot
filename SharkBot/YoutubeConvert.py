@@ -34,6 +34,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
     """
 
     _volume = 0.1
+    
     def __init__(self, source, data):
         """
         :param source: Discord audio source that can be streamed through voice client
@@ -55,8 +56,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
         :type url: str
         :param loop: Event loop to run this function in
         :type loop: asyncio.AbstractEventLoop
-        :param stream: Whether or not to download the audio source locally
-        :type stream: bool, optional
         :returns: An object containing the audio source, ffmpeg options for playback, and recorded data
         :rtype: YTDLSource
         """
@@ -78,7 +77,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
     def format_data(data, requester):
         """
         Gets all the necessary data from the extracted data from the url
-        :param data: The extracted data from the url, containing information about everythin on the Youtube url's page
+        :param data: The extracted data from the url, containing information about everything on the Youtube url's page
         :type data: dict
         :param requester: The user who requested this song
         :type requester: str
@@ -101,6 +100,3 @@ class YTDLSource(discord.PCMVolumeTransformer):
             'url': data.get('url'),
             'requester': requester
         }
-
-    # def __eq__(self, other):
-    #     return self.data['webpage_url'] == other.data['webpage_url']
