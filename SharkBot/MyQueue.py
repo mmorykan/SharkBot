@@ -1,8 +1,9 @@
-import asyncio
-from async_timeout import timeout
 import discord
 import emoji
 import random
+from collections import deque
+from asyncio import PriorityQueue, Event, TimeoutError, QueueFull
+from async_timeout import timeout
 
 
 class MusicPlayer:
@@ -27,12 +28,14 @@ class MusicPlayer:
         self.add_queue_counter = 0
         self.play_next_queue_counter = -1
 
-        self.queue_list = []
-        self.queue = asyncio.PriorityQueue(maxsize=100)
-        self.play_next_song = asyncio.Event()
+        self.songs = deque(maxlen=100)
+        self.queue = PriorityQueue(maxsize=100)
+        self.play_next_song = Event()
 
         self.task = self.bot.loop.create_task(self.player_loop())
         self.current_song = None
+
+        self.volume = 0.1
 
     async def player_loop(self):
         """
@@ -47,19 +50,17 @@ class MusicPlayer:
             try:
                 async with timeout(600):  # 10 minute timeout
                     self.current_song = (await self.queue.get())[1]  # (priority, player)
-                    self.queue_list.pop(0)  # Delete the song from the list
-            except asyncio.TimeoutError:
+                    self.songs.popleft()  # Delete the song from the list
+            except TimeoutError:
                 return await self.destroy()  # Deletes current instance
 
             self.ctx.voice_client.play(self.current_song, after=self.toggle_next)  # After is called after each song
             await self.display_song_message(['Now playing: ', 'Requested by: '])
             await self.play_next_song.wait()  # Make the loop wait until set is called in toggle_next, after the song has finished
 
-    def toggle_next(self, error):
+    def toggle_next(self, _):
         """
         Sets the asyncio event so that the loop is no longer waiting for the song to finish
-        :param error: Paramater to be raised if an exception occurs within the play function
-        :type error: Exception
         """
 
         self.bot.loop.call_soon_threadsafe(self.play_next_song.set)
@@ -100,25 +101,22 @@ class MusicPlayer:
         Push players back into queue with new priority values
         """
 
-        random_priorities = random.sample(range(len(self.queue_list)), len(self.queue_list))
-        queue = asyncio.PriorityQueue(maxsize=100)
-        random_queue_list = []
+        random_priorities = random.sample(range(len(self.songs)), len(self.songs))
+        queue = PriorityQueue(maxsize=self.queue.maxsize)
 
-        for i, (priority, player) in enumerate(self.queue_list):
+        for i, (_, player) in enumerate(self.songs):
             track = random_priorities[i], player
             queue.put_nowait(track)
-            random_queue_list.append(track)  # Append to new list because tuples are immutable
+            self.songs[i] = track  # Replace player in deque because tuples are immutable
 
-        random_queue_list.sort(key=lambda player: player[0])  # Put songs in correct order by priority values
-
-        self.queue_list = random_queue_list
+        self.songs = deque(sorted(self.songs), maxlen=self.songs.maxlen)
         self.queue = queue
         await self.ctx.send('Queue successfully shuffled!')
 
     async def show_queue(self):
         """Display a message for every song in the queue"""
 
-        for priority, player in self.queue_list:
+        for _, player in self.songs:
             await self.display_song_message(['Queued: ', 'Queued by: '], player.data)
 
     async def update_queue(self, player, front):
@@ -130,24 +128,22 @@ class MusicPlayer:
         :type front: bool
         """
         
-        counter = self.play_next_queue_counter if front else self.add_queue_counter
-        item = counter, player  # player tuple
+        if front:
+            item = (self.play_next_queue_counter, player)
+            self.songs.appendleft(item)
+            self.play_next_queue_counter -= 1
+        else:
+            item = (self.add_queue_counter, player)
+            self.songs.append(item)
+            self.add_queue_counter += 1
 
         try:
             self.queue.put_nowait(item)
-        except asyncio.QueueFull:
-            return await self.ctx.send(f'I cannot queue more than {self.queue.maxsize} songs')
+        except QueueFull:
+            await self.ctx.send(f'I cannot queue more than {self.queue.maxsize} songs')        
 
-        # Update list and counters
-        if front:
-            self.queue_list.insert(0, item)
-            self.play_next_queue_counter -= 1
-        else:
-            self.queue_list.append(item)
-            self.add_queue_counter += 1
-
-    def get_queue_list(self):
-        return self.queue_list
+    def get_song_list(self):
+        return self.songs
 
     def get_current_song(self):
         return self.current_song

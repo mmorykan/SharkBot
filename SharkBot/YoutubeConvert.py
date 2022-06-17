@@ -33,9 +33,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
     Records downloaded information about the song.
     """
 
-    _volume = 0.1
-    
-    def __init__(self, source, data):
+    def __init__(self, source, data, volume):
         """
         :param source: Discord audio source that can be streamed through voice client
         :type source: discord.FFmpegPCMAudio
@@ -45,11 +43,11 @@ class YTDLSource(discord.PCMVolumeTransformer):
         :type volume: float, optional
         """
         
-        super().__init__(source, volume=self._volume)
+        super().__init__(source, volume)
         self.data = data
         
     @classmethod
-    async def from_url(cls, ctx, url, *, loop):
+    async def from_url(cls, ctx, url, volume):
         """
         Gets a playable audio source to stream from Youtube.
         :param url: Search query to send to Youtube
@@ -60,10 +58,10 @@ class YTDLSource(discord.PCMVolumeTransformer):
         :rtype: YTDLSource
         """
 
-        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
-        if 'entries' in data:  # Enter if url is a search query instead of an address
+        data = await ctx.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
+        if 'entries' in data:  # Enter if url is a search query instead of a url
             while not data['entries']:  # entries field contains the url. Sometimes entries list is empty. Loop until not empty
-                data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
+                data = await ctx.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
             data = data['entries'][0]  # Gets first song
 
         return cls(discord.FFmpegPCMAudio(
@@ -71,7 +69,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
             before_options=ffmpeg_options['before_options'],
             options=ffmpeg_options['options']),
             data=cls.format_data(data, ctx.author.name),
-        )
+            volume=volume)
 
     @staticmethod
     def format_data(data, requester):
