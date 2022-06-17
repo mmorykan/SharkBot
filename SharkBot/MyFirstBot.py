@@ -6,7 +6,7 @@ from discord.ext import commands
 from HelpCommand import HelpInfo
 from MiscellaneousCommands import MiscellaneousCommands
 from MusicCommands import MusicCommands
-from SoundClips import SoundClips
+from SoundClipsCommands import SoundClipsCommands
 from TextAlert import send_message
 
 
@@ -22,8 +22,8 @@ def run_bot():
     GIPHY_TOKEN = os.getenv('GIPHY_TOKEN')
 
     bot.add_cog(MiscellaneousCommands(bot, GIPHY_TOKEN))
-    bot.add_cog(MusicCommands(bot))
-    bot.add_cog(SoundClips(bot))
+    bot.add_cog(MusicCommands())
+    bot.add_cog(SoundClipsCommands())
     bot.add_cog(HelpInfo())
     bot.run(DISCORD_TOKEN)
 

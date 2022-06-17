@@ -15,11 +15,11 @@ class Music:
               volume, connect, disconnect
     """
 
-    def __init__(self, bot):
-        """Initialize the players dict mapping guild ids to MusicPlayer objects. Also load opus for AWS"""
+    players = {}
 
-        self.bot = bot
-        self.players = {}
+    def __init__(self):
+        """Initialize the players dict mapping guild ids to MusicPlayer objects. Also load opus for AWS"""
+        pass        
         # discord.opus.load_opus('/home/linuxbrew/.linuxbrew/Cellar/opus/1.3.1/lib/libopus.so')  # Needed on AWS because ctypes.util.find_library('opus') only returns filename, not the path
 
     async def connect(self, ctx):
@@ -44,12 +44,20 @@ class Music:
 
         await (self.cleanup(ctx) if self.in_correct_voice_state(ctx) else self.not_same_channel(ctx))
 
+    async def play(self, ctx, url, msg, put_front):
+        await self.connect(ctx)
+        async with ctx.typing():
+            source = await YTDLSource.from_url(ctx, url, loop=ctx.bot.loop)
+            await self.add_to_queue(ctx, source, msg, put_front)
+        
     async def replay(self, ctx):
         """Replay the currently playing song by pushing the same player back into the front of the queue"""
 
         correct_guild = self.get_correct_guild(ctx)  # Get the guild's queue
         async def add_song():  # Create function to interact with the queue
-            await self.add_to_queue(ctx, correct_guild.current_song.data['webpage_url'], ['Replay: ', 'Requested by: '], True)
+            await self.add_to_queue(ctx, 
+            await YTDLSource.from_url(ctx, correct_guild.current_song.data['webpage_url'], loop=ctx.bot.loop),
+            ['Replay: ', 'Requested by: '], True)
 
         voice_state = self.in_correct_voice_state(ctx)  # voice_client to play source
         has_song = correct_guild.get_current_song  # Is there a song currently playing
@@ -120,7 +128,7 @@ class Music:
         error = 'I was not playing anything'
         await self.interact_with_queue(ctx, voice_state, can_stop_and_display_skip, stop_and_display_skip, error)
 
-    async def volume(self, ctx, volume: float=10.0):
+    async def volume(self, ctx, volume):
         """
         Change the volume of the audio source because is inherits discord.PCMVolumeTransformer.
         :param volume: The volume to change audio source to
@@ -128,6 +136,7 @@ class Music:
         """
 
         async def change_volume():  # Change volume with success message
+            YTDLSource._volume = volume / 100
             ctx.voice_client.source.volume = volume / 100
             await ctx.send(f'Changed volume to {volume}')
 
@@ -158,7 +167,7 @@ class Music:
         else:
             await self.not_same_channel(ctx)
 
-    async def add_to_queue(self, ctx, url, message, front):
+    async def add_to_queue(self, ctx, source, message, front):
         """
         Streams from a url or search query. Does not download audio file. Adds song to front or back of queue.
         :param url: the search query to type into Youtube
@@ -169,16 +178,12 @@ class Music:
         :type front: bool
         """
 
-        await self.connect(ctx)
-
         correct_guild = self.get_correct_guild(ctx)
-        async with ctx.typing():
-            player = await YTDLSource.from_url(ctx, url, loop=self.bot.loop, stream=True)
-        
-        await correct_guild.update_queue(player, front)
+
+        await correct_guild.update_queue(source, front)
 
         if correct_guild.get_current_song():
-            await correct_guild.display_song_message(message, data=player.data)
+            await correct_guild.display_song_message(message, data=source.data)
 
     def get_correct_guild(self, ctx):
         """
@@ -215,7 +220,6 @@ class Music:
     def in_same_channel(self, ctx):
         return ctx.voice_client.channel == ctx.author.voice.channel
 
-    @staticmethod
     async def not_same_channel(ctx):
         await ctx.send('Oh no! I\'m not in this channel!')
 

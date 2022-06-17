@@ -4,18 +4,18 @@ from Music import Music
 
 class MusicCommands(commands.Cog):
 
-    def __init__(self, bot):
-        self.music = Music(bot)
+    def __init__(self):
+        self.music = Music()
 
     @commands.command()
     async def play(self, ctx, *, url='cry by gryffin'):
-        await self.music.add_to_queue(ctx, url, ['Queued in front: ', 'Queued by: '], True)
+        await self.music.play(ctx, url, ['Queued in front: ', 'Queued by: '], True)
 
     @commands.command()
     async def add(self, ctx, *, url='cry by gryffin'):
-        await self.music.add_to_queue(ctx, url, ['Queued: ', 'Queued by: '], False)
+        await self.music.play(ctx, url, ['Queued: ', 'Queued by: '], False)
 
-    @commands.command()
+    @commands.command(aliases=['repeat'])
     async def replay(self, ctx):
         await self.music.replay(ctx)
 
