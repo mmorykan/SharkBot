@@ -1,6 +1,7 @@
 from discord.ext import commands
 from Miscellaneous import Miscellaneous
 
+
 class MiscellaneousCommands(commands.Cog):
     """
     Commands:
