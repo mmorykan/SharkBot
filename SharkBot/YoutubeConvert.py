@@ -33,7 +33,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
     Records downloaded information about the song.
     """
 
-    def __init__(self, source, data, volume=0.5):
+    def __init__(self, source, data, volume=0.2):
         """
         :param source: Discord audio source that can be streamed through voice client
         :type source: discord.FFmpegPCMAudio

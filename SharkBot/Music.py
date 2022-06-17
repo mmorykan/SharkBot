@@ -1,6 +1,5 @@
 import asyncio
 import emoji
-import discord
 from MyQueue import MusicPlayer
 from YoutubeConvert import YTDLSource
 
