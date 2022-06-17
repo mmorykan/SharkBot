@@ -1,15 +1,14 @@
-import discord
-from discord.ext import commands
+from discord import Embed, ext
 
-class HelpInfo(commands.Cog):
+class HelpInfo(ext.commands.Cog):
     """
     Wrapper for the help command so that the help function can be accessed through a Cog.
     """
 
-    @commands.command()
+    @ext.commands.command()
     async def help(self, ctx):
         """One discord Embed with one field per command. Color is dark blue."""
-        embed = discord.Embed(title='SharkBot', description='Here is a list of my commands',
+        embed = Embed(title='SharkBot', description='Here is a list of my commands',
                                 color=0x0000CD)
 
         embed.add_field(name='$hello', value='Greets the user', inline=False)
