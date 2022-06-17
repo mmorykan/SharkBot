@@ -52,8 +52,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
         Gets a playable audio source to stream from Youtube.
         :param url: Search query to send to Youtube
         :type url: str
-        :param loop: Event loop to run this function in
-        :type loop: asyncio.AbstractEventLoop
+        :param volume: The volume for the audio source.
+        :type volume: float
         :returns: An object containing the audio source, ffmpeg options for playback, and recorded data
         :rtype: YTDLSource
         """
