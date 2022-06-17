@@ -19,6 +19,7 @@ class Music:
 
     def __init__(self):
         """Initialize the players dict mapping guild ids to MusicPlayer objects. Also load opus for AWS"""
+
         pass        
         # discord.opus.load_opus('/home/linuxbrew/.linuxbrew/Cellar/opus/1.3.1/lib/libopus.so')  # Needed on AWS because ctypes.util.find_library('opus') only returns filename, not the path
 
@@ -45,6 +46,8 @@ class Music:
         await (self.cleanup(ctx) if self.in_correct_voice_state(ctx) else self.not_same_channel(ctx))
 
     async def play(self, ctx, url, msg, put_front):
+        """Connect voice client to channel, convert url to source, add source to queue"""
+
         await self.connect(ctx)
         async with ctx.typing():
             source = await YTDLSource.from_url(ctx, url, loop=ctx.bot.loop)
@@ -135,9 +138,8 @@ class Music:
         :type volume: float
         """
 
-        async def change_volume():  # Change volume with success message
-            YTDLSource._volume = volume / 100
-            ctx.voice_client.source.volume = volume / 100
+        async def change_volume():
+            ctx.voice_client.source.volume = YTDLSource._volume = volume / 100
             await ctx.send(f'Changed volume to {volume}')
 
         voice_state = self.in_correct_voice_state(ctx)
@@ -169,9 +171,9 @@ class Music:
 
     async def add_to_queue(self, ctx, source, message, front):
         """
-        Streams from a url or search query. Does not download audio file. Adds song to front or back of queue.
-        :param url: the search query to type into Youtube
-        :type url: str
+        Adds source to queue with info message. Adds song to front or back of queue.
+        :param source: The audio source to add to queue
+        :type url: YTDLSource
         :param message: The message to include in the title of the success message
         :type message: str
         :param front: Whether or not the song goes in the front of the queue
