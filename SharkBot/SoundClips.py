@@ -1,7 +1,8 @@
-from Music import Music
 import os
 from discord import FFmpegPCMAudio
+from Music import Music
 from YoutubeConvert import YTDLSource
+
 
 class SoundClips():
     """
@@ -26,7 +27,7 @@ class SoundClips():
         :param folder_name: The name of the directory within SoundClips to walk through
         :type folder_name: str
         :returns: The path to the queried audio file if found
-        :rtype: str or None
+        :rtype: str
         """
 
         folder_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'SoundClips', folder_name)
@@ -40,9 +41,9 @@ class SoundClips():
 
     async def play_quotes(self, ctx, file_):
         """
-        Play the quote if found, making sure there is a voice client connected.
-        :param filename: The name of the file to play. Typically a .mp3 file.
-        :type filename: str or None
+        Play the quote if found, making sure there is a voice client connected. Defaults to first file in folder.
+        :param file_: The file to play. Typically a .wav file.
+        :type filename: str
         """
 
         await self.music.connect(ctx)
