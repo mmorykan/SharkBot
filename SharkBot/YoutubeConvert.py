@@ -1,4 +1,4 @@
-import youtube_dl
+import yt_dlp
 import discord
 from datetime import timedelta
 
@@ -24,7 +24,7 @@ ffmpeg_options = {
     'options': '-vn'
 }
 
-ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
+ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 
 class YTDLSource(discord.PCMVolumeTransformer):
     """

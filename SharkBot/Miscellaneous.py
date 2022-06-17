@@ -109,9 +109,9 @@ class Miscellaneous(commands.Cog):
                                                             ' I play music from Youtube and sound clips from my soundboard.'
                                                             f' Try typing $help for a list of my commands {happy}',
                               color=0x0000CD)
-        embed.add_field(name="Author",
-                        value=self.bot.get_user(658765890334097429).mention,
-                        inline=False)
+        # embed.add_field(name="Author",
+        #                 value=self.bot.get_user(658765890334097429).mention,
+        #                 inline=False)
         embed.add_field(name='Server Count', value=f"{len(self.bot.guilds)}", inline=False)
         embed.add_field(name='Invite',
                         value='https://discordapp.com/api/oauth2/authorize?client_id=662501433156960266&permissions=522304&scope=bot',

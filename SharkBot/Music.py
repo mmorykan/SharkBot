@@ -1,18 +1,17 @@
 import asyncio
 import emoji
 import discord
-from discord.ext import commands
 from MyQueue import MusicPlayer
 from YoutubeConvert import YTDLSource
 
 
-class Music(commands.Cog):
+class Music:
     """
     Creates a music queue for each guild that SharkBot is a member of.
     Exposes all commands related to music available to users.
     Need to put ffmpeg in path environment variable in order to omit executable argument.
     Need a party time command for raves.
-    Commands: play <url>, add <url>, replay, shuffle,
+    Commands: replay, shuffle,
               now, show, pause, resume, skip,
               volume, connect, disconnect
     """
@@ -24,29 +23,28 @@ class Music(commands.Cog):
         self.players = {}
         # discord.opus.load_opus('/home/linuxbrew/.linuxbrew/Cellar/opus/1.3.1/lib/libopus.so')  # Needed on AWS because ctypes.util.find_library('opus') only returns filename, not the path
 
-    @commands.command()
-    async def play(self, ctx, *, url='angel wings avianna acid'):
-        """
-        Streams from a url or search query. Does not download audio file. Adds song to front of queue.
-        :param url: The search query to look up on Youtube
-        :type url: str, variable length
-        """
+    async def connect(self, ctx):
+        """Connect the voice client to the voice channel"""
+        
+        if self.user_voice_is_connected(ctx):
+            if self.voice_is_connected(ctx):
+                if not self.in_same_channel(ctx):
+                    # await ctx.send('Hey I\'m already connected')
+                # else:
+                    await self.cleanup(ctx)  # Disconnect and delete previous existing queue
+                    await ctx.author.voice.channel.connect()
+                    self.create_queue(ctx)  # Create a new queue
+            else:
+                await ctx.author.voice.channel.connect()
+                self.create_queue(ctx)
+        else:
+            await self.not_same_channel(ctx)
 
-        if await self.ensure_voice(ctx):  # Make sure there is a voice client before modifying queue
-            await self.add_to_queue(ctx, url, ['Queued in front: ', 'Queued by: '], True)
+    async def disconnect(self, ctx):
+        """Disconnect voice client from voice channel"""
 
-    @commands.command()
-    async def add(self, ctx, *, url='angel wings avianna acid'):
-        """
-        Streams from a url or search query. Does not download audio file. Adds song to back of queue.
-        :param url: The search query to look up on Youtube
-        :type url: str, variable length
-        """
+        await (self.cleanup(ctx) if self.in_correct_voice_state(ctx) else self.not_same_channel(ctx))
 
-        if await self.ensure_voice(ctx):  # Make sure there is a voice client before modifying queue
-            await self.add_to_queue(ctx, url, ['Queued ', 'Queued by: '], False)
-
-    @commands.command()
     async def replay(self, ctx):
         """Replay the currently playing song by pushing the same player back into the front of the queue"""
 
@@ -59,7 +57,6 @@ class Music(commands.Cog):
         error = 'No song to replay'  # If there is no song playing
         await self.interact_with_queue(ctx, voice_state, has_song, add_song, error)
 
-    @commands.command()
     async def shuffle(self, ctx): 
         """Shuffle the queue"""
 
@@ -70,7 +67,6 @@ class Music(commands.Cog):
         error = 'Queue is empty'  # If the queue is empty
         await self.interact_with_queue(ctx, voice_state, has_songs, shuffle, error)
     
-    @commands.command()
     async def now(self, ctx):
         """Get the currently playing song"""
 
@@ -84,7 +80,6 @@ class Music(commands.Cog):
         
         await self.interact_with_queue(ctx, voice_state, has_song, display_song, error)
 
-    @commands.command()
     async def show(self, ctx):
         """Show every song in the queue"""
 
@@ -95,7 +90,6 @@ class Music(commands.Cog):
         error = 'The queue is empty'
         await self.interact_with_queue(ctx, voice_state, has_songs, display_queue, error)
 
-    @commands.command(aliases=['stop'])
     async def pause(self, ctx):
         """Pause the audio source"""
 
@@ -105,7 +99,6 @@ class Music(commands.Cog):
         error = 'I was not playing anything'
         await self.interact_with_queue(ctx, voice_state, is_playing, pause, error)
 
-    @commands.command()
     async def resume(self, ctx):
         """Resume the paused audio source"""
 
@@ -115,7 +108,6 @@ class Music(commands.Cog):
         error = 'I was not paused'
         await self.interact_with_queue(ctx, voice_state, is_paused, resume, error)
 
-    @commands.command()
     async def skip(self, ctx):
         """Skip the currently playing song"""
 
@@ -129,7 +121,6 @@ class Music(commands.Cog):
         error = 'I was not playing anything'
         await self.interact_with_queue(ctx, voice_state, can_stop_and_display_skip, stop_and_display_skip, error)
 
-    @commands.command()
     async def volume(self, ctx, volume: float=10.0):
         """
         Change the volume of the audio source because is inherits discord.PCMVolumeTransformer.
@@ -145,54 +136,6 @@ class Music(commands.Cog):
         can_change_volume = lambda: 0 <= volume <= 100  
         error = 'My volume level must be between 0 and 100'
         await self.interact_with_queue(ctx, voice_state, can_change_volume, change_volume, error)
-
-    @commands.command()
-    async def connect(self, ctx):
-        """Connecte the voice client to the voice channel"""
-
-        if self.user_voice_is_connected(ctx):
-            if self.voice_is_connected(ctx):
-                if self.in_same_channel(ctx):
-                    await ctx.send('Hey I\'m already connected')
-                else:
-                    await self.cleanup(ctx)  # Disconnect and delete previous existing queue
-                    await ctx.author.voice.channel.connect()
-                    self.create_queue(ctx)  # Create a new queue
-            else:
-                await ctx.author.voice.channel.connect()
-                self.create_queue(ctx)
-                on_join(ctx)
-        else:
-            await self.not_same_channel(ctx)
-
-    @commands.command()
-    async def disconnect(self, ctx):
-        """Disconnect voice client from voice channel"""
-
-        if self.in_correct_voice_state(ctx):
-            await self.cleanup(ctx)
-        else:
-            await self.not_same_channel(ctx)
-        
-
-    async def ensure_voice(self, ctx):
-        """Make sure there is a voice client connected. Connect if there isn't"""
-
-        correct_voice_state = True
-        if self.user_voice_is_connected(ctx):
-            if self.voice_is_connected(ctx):
-                if not self.in_same_channel(ctx):
-                    await self.cleanup(ctx.guild)
-                    await ctx.author.voice.channel.connect()
-                    self.create_queue(ctx)
-            else:
-                await ctx.author.voice.channel.connect()
-                self.create_queue(ctx)
-        else:
-            await self.not_same_channel(ctx)
-            correct_voice_state = False
-
-        return correct_voice_state
 
     async def interact_with_queue(self, ctx, voice_state, has_song, display_songs, error_message):
         """
@@ -218,7 +161,7 @@ class Music(commands.Cog):
 
     async def add_to_queue(self, ctx, url, message, front):
         """
-        Add a song to the guild's queue and display success message.
+        Streams from a url or search query. Does not download audio file. Adds song to front or back of queue.
         :param url: the search query to type into Youtube
         :type url: str
         :param message: The message to include in the title of the success message
@@ -227,13 +170,15 @@ class Music(commands.Cog):
         :type front: bool
         """
 
+        await self.connect(ctx)
+
         correct_guild = self.get_correct_guild(ctx)
         async with ctx.typing():
             player = await YTDLSource.from_url(ctx, url, loop=self.bot.loop, stream=True)
         
         await correct_guild.update_queue(player, front)
 
-        if correct_guild.current_song:
+        if correct_guild.get_current_song():
             await correct_guild.display_song_message(message, data=player.data)
 
     def get_correct_guild(self, ctx):
@@ -280,10 +225,3 @@ class Music(commands.Cog):
         
         await ctx.voice_client.disconnect()
         del self.players[ctx.guild.id]
-
-def on_join(ctx):
-    """The sound clip to play as the voice client first connects"""
-
-    source = '../SoundClips/GameboyStartup.m4a'
-    player = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(source))
-    ctx.voice_client.play(player)

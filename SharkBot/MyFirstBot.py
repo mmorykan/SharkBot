@@ -3,10 +3,9 @@ import os
 from dotenv import load_dotenv, find_dotenv
 import emoji
 from discord.ext import commands
-from YoutubeConvert import YTDLSource
 from HelpCommand import HelpInfo
 from Miscellaneous import Miscellaneous
-from Music import Music
+from MusicCommands import MusicCommands
 from SoundClips import SoundClips
 from TextAlert import send_message
 
@@ -23,7 +22,7 @@ def run_bot():
     GIPHY_TOKEN = os.getenv('GIPHY_TOKEN')
 
     bot.add_cog(Miscellaneous(bot, GIPHY_TOKEN))
-    bot.add_cog(Music(bot))
+    bot.add_cog(MusicCommands(bot))
     bot.add_cog(SoundClips(bot))
     bot.add_cog(HelpInfo())
     bot.run(DISCORD_TOKEN)
