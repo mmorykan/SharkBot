@@ -1,4 +1,5 @@
 import emoji
+import discord
 from MyQueue import MusicPlayer
 from YoutubeConvert import YTDLSource
 
@@ -18,8 +19,8 @@ class Music:
 
     def __init__(self):
         """Initialize the players dict mapping guild ids to MusicPlayer objects. Also load opus for AWS"""
-
-        pass
+        discord.opus.load_opus()
+        # pass
         # discord.opus.load_opus('/home/linuxbrew/.linuxbrew/Cellar/opus/1.3.1/lib/libopus.so')  # Needed on AWS because ctypes.util.find_library('opus') only returns filename, not the path
 
     async def connect(self, ctx):
