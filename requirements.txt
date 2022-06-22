@@ -1,4 +1,3 @@
-ffmpeg
 giphy_client
 discord.py[voice]
 emoji
