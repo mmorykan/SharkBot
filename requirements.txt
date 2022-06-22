@@ -4,4 +4,3 @@ emoji
 yt-dlp
 python-dotenv
 twilio
-opuslib

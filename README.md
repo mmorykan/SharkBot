@@ -3,7 +3,8 @@ Discord bot that streams music from Youtube and can queue songs as well as play 
 
 Libraries:
 - yt-dlp
-- ffmpeg
 - giphyclient
 - discord.py[voice]
 - emoji
+- python-dotenv
+- twilio
