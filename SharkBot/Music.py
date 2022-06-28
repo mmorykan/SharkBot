@@ -1,6 +1,9 @@
+import os
 import emoji
+from discord import PCMVolumeTransformer, FFmpegPCMAudio
 from MyQueue import MusicPlayer
 from YoutubeConvert import YTDLSource
+from SoundClips import SoundClips
 
 
 class Music:
@@ -14,12 +17,10 @@ class Music:
               volume, connect, disconnect
     """
 
-    players = {}
-
     def __init__(self):
         """Initialize the players dict mapping guild ids to MusicPlayer objects. Also load opus for AWS"""
-        pass
-        # discord.opus.load_opus('/home/linuxbrew/.linuxbrew/Cellar/opus/1.3.1/lib/libopus.so')  # Needed on AWS because ctypes.util.find_library('opus') only returns filename, not the path
+
+        self.players = {}
 
     async def connect(self, ctx):
         """Connect the voice client to the voice channel"""
@@ -39,7 +40,7 @@ class Music:
     async def disconnect(self, ctx):
         """Disconnect voice client from voice channel"""
 
-        await (self.cleanup(ctx) if self.in_correct_voice_state(ctx) else self.not_same_channel(ctx))
+        await (ctx.cog.cleanup(ctx) if self.in_correct_voice_state(ctx) else self.not_same_channel(ctx))
 
     async def play(self, ctx, url, msg, put_front):
         """Connect voice client to channel, convert url to source, add source to queue"""
@@ -209,8 +210,17 @@ class Music:
     async def not_same_channel(self, ctx):
         await ctx.send('Oh no! I\'m not in this channel!')
 
-    async def cleanup(self, ctx):
-        """Disconnected the voice client and delete the guild's queue"""
-        
-        await ctx.voice_client.disconnect()
-        del self.players[ctx.guild.id]
+    async def play_clip(self, ctx, query, folder_name):
+        await self.play_quote(ctx, SoundClips.find_file(query, folder_name))
+
+    async def play_quote(self, ctx, file_):
+        """
+        Play the quote if found, making sure there is a voice client connected. Defaults to first file in folder.
+        :param file_: The file to play. Typically a .wav file.
+        :type filename: str
+        """
+
+        await self.connect(ctx)
+        source = PCMVolumeTransformer(FFmpegPCMAudio(file_), self.get_correct_guild(ctx).volume)
+        setattr(source, 'data', {'requester': ctx.author.name, 'title': file_.rsplit(os.sep)[-1], 'duration': 0, 'webpage_url': None})
+        await self.add_to_queue(ctx, source, ['Queued in front: ', 'Queued by: '], True)

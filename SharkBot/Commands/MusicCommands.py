@@ -1,11 +1,11 @@
 from discord.ext import commands
-from Music import Music
+from Commands.Audio import Audio
 
 
-class MusicCommands(commands.Cog):
+class MusicCommands(Audio):
 
     def __init__(self):
-        self.music = Music()
+        super().__init__()
 
     @commands.command()
     async def play(self, ctx, *, url='cry by gryffin'):
