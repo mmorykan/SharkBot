@@ -35,7 +35,7 @@ class YTDLSource(AudioSource):
     """        
         
     @classmethod
-    async def from_url(cls, ctx, url, volume):
+    async def get_source(cls, ctx, url, volume):
         """
         Gets a playable audio source to stream from Youtube.
         :param url: Search query to send to Youtube

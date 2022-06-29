@@ -1,16 +1,17 @@
 from discord.ext import commands
 from Commands.Audio import Audio
+from YoutubeConvert import YTDLSource
 
 
 class MusicCommands(Audio):
 
     @commands.command()
     async def play(self, ctx, *, url='cry by gryffin'):
-        await self.music.play(ctx, url, ['Queued in front: ', 'Queued by: '], True)
+        await self.music.play(ctx, url, FromSource=YTDLSource)
 
     @commands.command()
     async def add(self, ctx, *, url='cry by gryffin'):
-        await self.music.play(ctx, url, ['Queued: ', 'Queued by: '], False)
+        await self.music.play(ctx, url, put_front=False, FromSource=YTDLSource)
 
     @commands.command(aliases=['repeat'])
     async def replay(self, ctx):

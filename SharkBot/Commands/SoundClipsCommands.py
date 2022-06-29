@@ -13,59 +13,59 @@ class SoundClipsCommands(Audio):
 
     @commands.command()
     async def yoda(self, ctx, *, query='Do or do not'):
-        await self.music.play_quote(ctx, query, 'Yoda')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def ewok(self, ctx, *, query='Shout'):
-        await self.music.play_quote(ctx, query, 'Ewok')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def chewbacca(self, ctx, *, query='Shout'):
-        await self.music.play_quote(ctx, query, 'Chewbacca')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def jabba(self, ctx, *, query='Laugh'):
-        await self.music.play_quote(ctx, query, 'Jabba')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def leia(self, ctx, *, query='Help me'):
-        await self.music.play_quote(ctx, query, 'Leia')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def hansolo(self, ctx, *, query='Never tell me the odds'):
-        await self.music.play_quote(ctx, query, 'Hansolo')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def roshi(self, ctx, *, query='Laugh'):
-        await self.music.play_quote(ctx, query, 'Roshi')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def oogway(self, ctx, *, query='Present'):
-        await self.music.play_quote(ctx, query, 'Oogway')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def sid(self, ctx, *, query='I choose life'):
-        await self.music.play_quote(ctx, query, 'Sid')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def shifu(self, ctx, *, query='Level zero'):
-        await self.music.play_quote(ctx, query, 'Shifu')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def chunk(self, ctx, *, query='Chocolate eruption'):
-        await self.music.play_quote(ctx, query, 'Chunk')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def docholiday(self, ctx, *, query='Huckleberry'):
-        await self.music.play_quote(ctx, query, 'Docholiday')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def kuzco(self, ctx, *, query='credit'):
-        await self.music.play_quote(ctx, query, 'Kuzco')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def majorpayne(self, ctx, *, query='Laugh'):
-        await self.music.play_quote(ctx, query, 'Majorpayne')
+        await self.music.play(ctx, query)
 
     @commands.command()
     async def birthday(self, ctx):

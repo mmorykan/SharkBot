@@ -13,7 +13,7 @@ class SoundClips(AudioSource):
     """
 
     @classmethod
-    async def get_file_source(cls, ctx, query, folder_name, volume):
+    async def get_source(cls, ctx, query, volume):
         """
         Walks through the SoundClips directory looking for the file closest to the search query.
         :param query: The search query to get matched to a name of a file
@@ -24,7 +24,7 @@ class SoundClips(AudioSource):
         :rtype: str
         """
 
-        folder_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'SoundClips', folder_name)
+        folder_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'SoundClips', ctx.command.name.capitalize())
         files = os.listdir(folder_path)
         file_ = os.path.join(folder_path, files[0])
         for filename in files:

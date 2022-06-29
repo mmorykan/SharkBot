@@ -40,13 +40,14 @@ class Music:
 
         await (ctx.cog.cleanup(ctx) if self.in_correct_voice_state(ctx) else self.not_same_channel(ctx))
 
-    async def play(self, ctx, url, msg, put_front):
+    async def play(self, ctx, query, put_front=True, FromSource=SoundClips):
         """Connect voice client to channel, convert url to source, add source to queue"""
 
         await self.connect(ctx)
-        async with ctx.typing():
-            source = await YTDLSource.from_url(ctx, url, self.get_correct_guild(ctx).volume)
-            await self.add_to_queue(ctx, source, msg, put_front)
+        await ctx.trigger_typing()
+        source = await FromSource.get_source(ctx, query, self.get_correct_guild(ctx).volume)
+        msg = ['Queued in front: ', 'Queued by: '] if put_front else ['Queued: ', 'Queued by: ']
+        await self.add_to_queue(ctx, source, msg, put_front)
 
     def check_voice(error_msg):
         def check_voice_inner(queue_function):
@@ -207,14 +208,3 @@ class Music:
 
     async def not_same_channel(self, ctx):
         await ctx.send('Oh no! I\'m not in this channel!')
-
-    async def play_quote(self, ctx, query, folder_name):
-        """
-        Play the quote if found, making sure there is a voice client connected. Defaults to first file in folder.
-        :param file_: The file to play. Typically a .wav file.
-        :type filename: str
-        """
-
-        await self.connect(ctx)
-        source = await SoundClips.get_file_source(ctx, query, folder_name, self.get_correct_guild(ctx).volume)
-        await self.add_to_queue(ctx, source, ['Queued in front: ', 'Queued by: '], True)
