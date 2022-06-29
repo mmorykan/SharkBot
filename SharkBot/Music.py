@@ -1,6 +1,5 @@
 import emoji
 from MyQueue import MusicPlayer
-from YoutubeConvert import YTDLSource
 from SoundClips import SoundClips
 
 
@@ -68,10 +67,10 @@ class Music:
 
         ctx, guild = kwargs['ctx'], kwargs['guild']
         current_song = guild.get_current_song()
-        if current_song:  # Cannot replay quotes
-            async with ctx.typing():
-                source = await YTDLSource.from_url(ctx, current_song.data['webpage_url'], guild.volume)
-                await self.add_to_queue(ctx, source, ['Replay: ', 'Requested by: '], True)
+        if current_song and current_song.data['webpage_url']:  # Cannot replay quotes
+            await ctx.trigger_typing()
+            source = await current_song.get_source(ctx, current_song.data['webpage_url'], guild.volume)
+            await self.add_to_queue(ctx, source, ['Replay: ', 'Requested by: '], True)
             return True
         return False
 
