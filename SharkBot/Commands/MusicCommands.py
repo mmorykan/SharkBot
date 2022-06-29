@@ -4,9 +4,6 @@ from Commands.Audio import Audio
 
 class MusicCommands(Audio):
 
-    def __init__(self):
-        super().__init__()
-
     @commands.command()
     async def play(self, ctx, *, url='cry by gryffin'):
         await self.music.play(ctx, url, ['Queued in front: ', 'Queued by: '], True)

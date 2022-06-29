@@ -35,7 +35,7 @@ class MusicPlayer:
         self.task = self.bot.loop.create_task(self.player_loop())
         self.current_song = None
 
-        self.volume = 0.1
+        self.volume = 0.05
 
     async def player_loop(self):
         """
@@ -93,7 +93,7 @@ class MusicPlayer:
     async def destroy(self):
         """Disconnect voice client and delete this current instance."""
 
-        await self.ctx.cog.cleanup(self.ctx) 
+        await self.ctx.cog.cleanup(self.ctx)
 
     async def shuffle(self):
         """

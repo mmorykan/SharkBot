@@ -1,7 +1,9 @@
 import os
+from discord import FFmpegPCMAudio
+from AudioSource import AudioSource
 
 
-class SoundClips:
+class SoundClips(AudioSource):
     """
     Plays a file from the local filesystem
     Commands (all take one argument, the search query): 
@@ -9,9 +11,9 @@ class SoundClips:
         oogway, sid, shifu, chunk, docholiday, kuzco, majorpayne,
         birthday
     """
-    
-    @staticmethod
-    def find_file(query, folder_name):
+
+    @classmethod
+    async def get_file_source(cls, ctx, query, folder_name, volume):
         """
         Walks through the SoundClips directory looking for the file closest to the search query.
         :param query: The search query to get matched to a name of a file
@@ -24,9 +26,12 @@ class SoundClips:
 
         folder_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'SoundClips', folder_name)
         files = os.listdir(folder_path)
+        file_ = os.path.join(folder_path, files[0])
         for filename in files:
             clip_name = ''.join(query.lower().split())
             if clip_name in filename.lower():
-                return os.path.join(folder_path, filename)
+                file_ = os.path.join(folder_path, filename)
 
-        return os.path.join(folder_path, files[0])
+        return cls(FFmpegPCMAudio(file_), 
+               {'requester': ctx.author.name, 'title': file_.rsplit(os.sep)[-1], 'duration': 0, 'webpage_url': None}, 
+               volume)

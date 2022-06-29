@@ -1,6 +1,7 @@
 import yt_dlp
-import discord
 from datetime import timedelta
+from discord import FFmpegPCMAudio
+from AudioSource import AudioSource
 
 
 # Set up formatting options for optimal streaming
@@ -26,25 +27,12 @@ ffmpeg_options = {
 
 ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 
-class YTDLSource(discord.PCMVolumeTransformer):
+class YTDLSource(AudioSource):
     """
     Creates the player object to be stored in the queue.
     Subclass of discord.PCMVolumeTransformer in order to access volume attribute.
     Records downloaded information about the song.
-    """
-
-    def __init__(self, source, data, volume):
-        """
-        :param source: Discord audio source that can be streamed through voice client
-        :type source: discord.FFmpegPCMAudio
-        :param data: Recorded information about the source such as artist and url
-        :type data: dict
-        :param volume: The volume for the audio source. Only available because this inherits from discord.PCMVolumeTransformer
-        :type volume: float, optional
-        """
-        
-        super().__init__(source, volume)
-        self.data = data
+    """        
         
     @classmethod
     async def from_url(cls, ctx, url, volume):
@@ -64,7 +52,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
                 data = await ctx.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
             data = data['entries'][0]  # Gets first song
 
-        return cls(discord.FFmpegPCMAudio(
+        return cls(FFmpegPCMAudio(
             data['url'],
             before_options=ffmpeg_options['before_options'],
             options=ffmpeg_options['options']),

@@ -1,6 +1,4 @@
-import os
 import emoji
-from discord import PCMVolumeTransformer, FFmpegPCMAudio
 from MyQueue import MusicPlayer
 from YoutubeConvert import YTDLSource
 from SoundClips import SoundClips
@@ -28,9 +26,9 @@ class Music:
         if self.user_voice_is_connected(ctx):
             if self.voice_is_connected(ctx):
                 if not self.in_same_channel(ctx):
-                    await self.cleanup(ctx)  # Disconnect and delete previous existing queue
+                    await ctx.cog.cleanup(ctx)
                     await ctx.author.voice.channel.connect()
-                    self.create_queue(ctx)  # Create a new queue
+                    self.create_queue(ctx)
             else:
                 await ctx.author.voice.channel.connect()
                 self.create_queue(ctx)
@@ -210,10 +208,7 @@ class Music:
     async def not_same_channel(self, ctx):
         await ctx.send('Oh no! I\'m not in this channel!')
 
-    async def play_clip(self, ctx, query, folder_name):
-        await self.play_quote(ctx, SoundClips.find_file(query, folder_name))
-
-    async def play_quote(self, ctx, file_):
+    async def play_quote(self, ctx, query, folder_name):
         """
         Play the quote if found, making sure there is a voice client connected. Defaults to first file in folder.
         :param file_: The file to play. Typically a .wav file.
@@ -221,6 +216,5 @@ class Music:
         """
 
         await self.connect(ctx)
-        source = PCMVolumeTransformer(FFmpegPCMAudio(file_), self.get_correct_guild(ctx).volume)
-        setattr(source, 'data', {'requester': ctx.author.name, 'title': file_.rsplit(os.sep)[-1], 'duration': 0, 'webpage_url': None})
+        source = await SoundClips.get_file_source(ctx, query, folder_name, self.get_correct_guild(ctx).volume)
         await self.add_to_queue(ctx, source, ['Queued in front: ', 'Queued by: '], True)

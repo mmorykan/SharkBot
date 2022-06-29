@@ -4,8 +4,7 @@ from Music import Music
 
 class Audio(Cog):
 
-    def __init__(self):
-        self.music = Music()
+    music = Music()
 
     async def cleanup(self, ctx):
         await ctx.voice_client.disconnect()
