@@ -1,4 +1,4 @@
-import os
+import os, re
 from discord import FFmpegPCMAudio
 from AudioSource import AudioSource
 
@@ -34,5 +34,10 @@ class SoundClips(AudioSource):
                 file_ = os.path.join(folder_path, filename)
 
         return cls(FFmpegPCMAudio(file_), 
-               {'requester': ctx.author.name, 'title': file_.rsplit(os.sep)[-1], 'duration': 0, 'webpage_url': None, 'query': query}, 
+               {'requester': ctx.author.name, 'title': cls.format_filename(file_), 'duration': 0, 'webpage_url': None, 'query': query}, 
                volume)
+
+    @staticmethod
+    def format_filename(file_path):
+        filename = file_path.rsplit(os.sep)[-1].rsplit('.')[0]
+        return ' '.join(re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', filename)).split())
