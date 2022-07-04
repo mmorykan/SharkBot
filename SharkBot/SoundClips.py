@@ -24,7 +24,8 @@ class SoundClips(AudioSource):
         :rtype: str
         """
 
-        folder_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'SoundClips', ctx.command.name.capitalize())
+        folder_name = ctx.invoked_with.capitalize()
+        folder_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'SoundClips', folder_name)
         files = os.listdir(folder_path)
         file_ = os.path.join(folder_path, files[0])
         for filename in files:
@@ -33,5 +34,5 @@ class SoundClips(AudioSource):
                 file_ = os.path.join(folder_path, filename)
 
         return cls(FFmpegPCMAudio(file_), 
-               {'requester': ctx.author.name, 'title': file_.rsplit(os.sep)[-1], 'duration': 0, 'webpage_url': None}, 
+               {'requester': ctx.author.name, 'title': file_.rsplit(os.sep)[-1], 'duration': 0, 'webpage_url': None, 'query': query}, 
                volume)

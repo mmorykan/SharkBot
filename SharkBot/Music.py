@@ -69,11 +69,11 @@ class Music:
         current_song = guild.get_current_song()
         if current_song and current_song.data['webpage_url']:  # Cannot replay quotes
             await ctx.trigger_typing()
-            source = await current_song.get_source(ctx, current_song.data['webpage_url'], guild.volume)
+            source = await current_song.get_source(ctx, current_song.data['query'], guild.volume)
             await self.add_to_queue(ctx, source, ['Replay: ', 'Requested by: '], True)
             return True
         return False
-
+ 
     @check_voice('Queue is empty')
     async def shuffle(self, **kwargs): 
         """Shuffle the queue"""

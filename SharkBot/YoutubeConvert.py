@@ -56,11 +56,11 @@ class YTDLSource(AudioSource):
             data['url'],
             before_options=ffmpeg_options['before_options'],
             options=ffmpeg_options['options']),
-            data=cls.format_data(data, ctx.author.name),
+            data=cls.format_data(data, ctx.author.name, url),
             volume=volume)
 
     @staticmethod
-    def format_data(data, requester):
+    def format_data(data, requester, query):
         """
         Gets all the necessary data from the extracted data from the url
         :param data: The extracted data from the url, containing information about everything on the Youtube url's page
@@ -84,5 +84,6 @@ class YTDLSource(AudioSource):
             'average_rating': data.get('average_rating'),
             'title': data.get('title'),
             'url': data.get('url'),
+            'query': query,
             'requester': requester
         }

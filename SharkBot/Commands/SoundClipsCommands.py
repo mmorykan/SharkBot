@@ -11,61 +11,26 @@ class SoundClipsCommands(Audio):
         birthday
     """
 
-    @commands.command()
-    async def yoda(self, ctx, *, query='Do or do not'):
-        await self.music.play(ctx, query)
+    defaults = {
+        'yoda': 'Do or do not',
+        'ewok': 'Shout',
+        'chewbacca': 'Shout',
+        'jabba': 'Laugh',
+        'leia': 'Help me',
+        'hansolo': 'Never tell me the odds',
+        'roshi': 'Laugh',
+        'oogway': 'Present',
+        'sid': 'I choose life',
+        'shifu': 'Level zero',
+        'chunk': 'Chocolate eruption',
+        'docholiday': 'Huckleberry',
+        'kuzco': 'Credit',
+        'majorpayne': 'Laugh',
+    }
 
-    @commands.command()
-    async def ewok(self, ctx, *, query='Shout'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def chewbacca(self, ctx, *, query='Shout'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def jabba(self, ctx, *, query='Laugh'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def leia(self, ctx, *, query='Help me'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def hansolo(self, ctx, *, query='Never tell me the odds'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def roshi(self, ctx, *, query='Laugh'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def oogway(self, ctx, *, query='Present'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def sid(self, ctx, *, query='I choose life'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def shifu(self, ctx, *, query='Level zero'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def chunk(self, ctx, *, query='Chocolate eruption'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def docholiday(self, ctx, *, query='Huckleberry'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def kuzco(self, ctx, *, query='credit'):
-        await self.music.play(ctx, query)
-
-    @commands.command()
-    async def majorpayne(self, ctx, *, query='Laugh'):
-        await self.music.play(ctx, query)
+    @commands.command(aliases=tuple(filter(lambda name: name != 'yoda', defaults.keys())))
+    async def yoda(self, ctx, *, query=None):
+        await self.music.play(ctx, query if query else self.defaults[ctx.invoked_with])
 
     @commands.command()
     async def birthday(self, ctx):
