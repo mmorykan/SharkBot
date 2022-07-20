@@ -42,9 +42,7 @@ class MusicPlayer:
 
             try:
                 async with timeout(600):  # 10 minute timeout
-                    print('getting song')
                     self.current_song = await self.queue.get()
-                    print(self.current_song)
             except TimeoutError:
                 return await self.destroy()  # Deletes current instance
 
