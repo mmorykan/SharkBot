@@ -1,16 +1,13 @@
 import discord
 import emoji
 import random
-from collections import deque
-from asyncio import PriorityQueue, Event, TimeoutError, QueueFull
+from asyncio import Event, TimeoutError, QueueFull, Queue
 from async_timeout import timeout
 
 
 class MusicPlayer:
     """
-    Represents an asyncio priority queue.
-    Maintains a counter for priorities to discern whether songs should be in the front or in the back.
-    Maintains a list as well as a priority queue in order to display the queue when asked.
+    Represents an asyncio queue.
     Creates a task to infinitely run the player_loop, looking for the next song.
     Ends task and deletes instance after being idle for 10 minutes.
     Uses asyncio Event to determine when to temporarily halt the loop and when to let it continue.
@@ -19,17 +16,13 @@ class MusicPlayer:
 
     def __init__(self, ctx):
         """
-        Initializes priority counters, queue list, priority queue, asyncio event, and the task
+        Initializes queue, asyncio event, and the task
         """
 
         self.ctx = ctx
         self.bot = ctx.bot
 
-        self.add_queue_counter = 0
-        self.play_next_queue_counter = -1
-
-        self.songs = deque(maxlen=100)
-        self.queue = PriorityQueue(maxsize=100)
+        self.queue = Queue(maxsize=100)
         self.play_next_song = Event()
 
         self.task = self.bot.loop.create_task(self.player_loop())
@@ -49,8 +42,9 @@ class MusicPlayer:
 
             try:
                 async with timeout(600):  # 10 minute timeout
-                    self.current_song = (await self.queue.get())[1]  # (priority, player)
-                    self.songs.popleft()  # Delete the song from the list
+                    print('getting song')
+                    self.current_song = await self.queue.get()
+                    print(self.current_song)
             except TimeoutError:
                 return await self.destroy()  # Deletes current instance
 
@@ -101,22 +95,13 @@ class MusicPlayer:
         Push players back into queue with new priority values
         """
 
-        random_priorities = random.sample(range(len(self.songs)), len(self.songs))
-        queue = PriorityQueue(maxsize=self.queue.maxsize)
-
-        for i, (_, player) in enumerate(self.songs):
-            track = random_priorities[i], player
-            queue.put_nowait(track)
-            self.songs[i] = track  # Replace player in deque because tuples are immutable
-
-        self.songs = deque(sorted(self.songs), maxlen=self.songs.maxlen)
-        self.queue = queue
+        random.shuffle(self.queue._queue)
         await self.ctx.send('Queue successfully shuffled!')
 
     async def show_queue(self):
         """Display a message for every song in the queue"""
 
-        for _, player in self.songs:
+        for player in self.queue._queue:
             await self.display_song_message(['Queued: ', 'Queued by: '], player.data)
 
     async def update_queue(self, player, front):
@@ -127,23 +112,17 @@ class MusicPlayer:
         :param front: Whether or not this song should be played next
         :type front: bool
         """
-        
-        if front:
-            item = (self.play_next_queue_counter, player)
-            self.songs.appendleft(item)
-            self.play_next_queue_counter -= 1
-        else:
-            item = (self.add_queue_counter, player)
-            self.songs.append(item)
-            self.add_queue_counter += 1
 
         try:
-            self.queue.put_nowait(item)
+            self.queue.put_nowait(player)
         except QueueFull:
-            await self.ctx.send(f'I cannot queue more than {self.queue.maxsize} songs')        
+            await self.ctx.send(f'I cannot queue more than {self.queue.maxsize} songs')
 
     def get_song_list(self):
-        return self.songs
+        return self.queue._queue
 
     def get_current_song(self):
         return self.current_song
+
+    def __del__(self):
+        self.task.cancel()
