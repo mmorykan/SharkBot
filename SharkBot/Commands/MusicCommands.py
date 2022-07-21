@@ -42,7 +42,7 @@ class MusicCommands(Audio):
         await self.music.skip(ctx)
 
     @commands.command()
-    async def volume(self, ctx, volume=10.0):
+    async def volume(self, ctx, volume=0.05):
         await self.music.volume(ctx, volume)
 
     @commands.command()
