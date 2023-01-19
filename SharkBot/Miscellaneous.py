@@ -2,6 +2,7 @@ import giphy_client
 import emoji
 import random
 import discord
+from TextAlert import send_message
 
 
 class Miscellaneous:
@@ -84,3 +85,37 @@ class Miscellaneous:
                         inline=False)
 
         await ctx.message.channel.send(embed=embed)
+
+    @staticmethod
+    async def send_guild_join_msg(guild):
+        """
+        Texts my cell phone when SharkBot is invited into a new guild.
+        :param guild: The guild that SharkBot was invited to
+        :type guild: discord.Guild
+        """
+        try:
+            send_message(f'SharkBot has joined {guild}!')
+        except:
+            pass
+
+    @staticmethod
+    async def send_member_join_msg(member):
+        """
+        Welcome a new member.
+        :param member: The member who just join the guild
+        :type member: discord.Member
+        """
+
+        for channel in member.guild.channels:
+            if channel.name == 'general':
+                exclaim = emoji.emojize(':exclamation:')
+                await channel.send(f'Welcome {member.name.mention}{exclaim}')
+                break
+
+    async def send_on_ready_msg(self):
+        """First function to run when SharkBot starts up"""
+
+        print('Logged in as')
+        print(self.bot.user.name)
+        print(self.bot.user.id)
+        print('------')

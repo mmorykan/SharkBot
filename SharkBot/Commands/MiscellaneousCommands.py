@@ -51,6 +51,18 @@ class MiscellaneousCommands(commands.Cog):
     async def info(self, ctx):
         await self.misc.info(ctx)
 
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild):
+        await self.misc.send_guild_join_msg(guild)
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        await self.misc.send_member_join_msg(member)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.misc.send_on_ready_msg()
+
 
 async def setup(bot):
     GIPHY_TOKEN = os.getenv('GIPHY_TOKEN')
