@@ -7,25 +7,13 @@ import asyncio
 from discord.ext import commands
 from TextAlert import send_message
 
-intents = discord.Intents.default()
-intents.message_content = True
-intents.voice_states = True
 # Create the bot and remove default help command
-bot = commands.Bot(command_prefix='$', help_command=None, description='The PS2 cheats sitting in your basement', intents=intents)
+bot = commands.Bot(command_prefix='$', help_command=None, description='The PS2 cheats sitting in your basement', intents=discord.Intents.all())
 
 async def load_extensions():
-    # for filename in os.listdir(os.path.join(os.getcwd(), 'Commands')):
-    #     if filename.endswith(".py"):
-    #         await bot.load_extension(f"Commands.{filename[:-3]}")
-    cogs = [
-        'Audio',
-        'HelpCommand',
-        'MiscellaneousCommands',
-        'MusicCommands',
-        'SoundClipsCommands',
-    ]
-    for cog in cogs:
-        await bot.load_extension(f'Commands.{cog}')
+    for filename in os.listdir(os.path.join(os.getcwd(), 'SharkBot', 'Commands')):
+        if filename.endswith(".py"):
+            await bot.load_extension(f"Commands.{filename[:-3]}")
 
 @bot.event
 async def on_reaction_remove(reaction, user):
