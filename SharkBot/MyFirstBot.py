@@ -2,31 +2,30 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 import emoji
+import discord
+import asyncio
 from discord.ext import commands
-from Commands.HelpCommand import HelpInfo
-from Commands.MiscellaneousCommands import MiscellaneousCommands
-from Commands.MusicCommands import MusicCommands
-from Commands.SoundClipsCommands import SoundClipsCommands
 from TextAlert import send_message
 
-
+intents = discord.Intents.default()
+intents.message_content = True
+intents.voice_states = True
 # Create the bot and remove default help command
-bot = commands.Bot(command_prefix='$', help_command=None, description='The PS2 cheats sitting in your basement')
+bot = commands.Bot(command_prefix='$', help_command=None, description='The PS2 cheats sitting in your basement', intents=intents)
 
-
-def run_bot():
-    """Load environment variables for authentication and add all cogs. Then run the bot"""
-
-    load_dotenv(find_dotenv())
-    DISCORD_TOKEN = os.getenv('DISCORD_API_TOKEN')
-    GIPHY_TOKEN = os.getenv('GIPHY_TOKEN')
-
-    bot.add_cog(MiscellaneousCommands(bot, GIPHY_TOKEN))
-    bot.add_cog(MusicCommands())
-    bot.add_cog(SoundClipsCommands())
-    bot.add_cog(HelpInfo())
-    bot.run(DISCORD_TOKEN)
-
+async def load_extensions():
+    # for filename in os.listdir(os.path.join(os.getcwd(), 'Commands')):
+    #     if filename.endswith(".py"):
+    #         await bot.load_extension(f"Commands.{filename[:-3]}")
+    cogs = [
+        'Audio',
+        'HelpCommand',
+        'MiscellaneousCommands',
+        'MusicCommands',
+        'SoundClipsCommands',
+    ]
+    for cog in cogs:
+        await bot.load_extension(f'Commands.{cog}')
 
 @bot.event
 async def on_reaction_remove(reaction, user):
@@ -85,15 +84,17 @@ async def on_guild_join(guild):
         pass
 
 
-@bot.event
-async def on_ready():
-    """First function to run when SharkBot starts up"""
+# @bot.event
+# async def on_ready():
+#     """First function to run when SharkBot starts up"""
 
-    print('Logged in as')
-    print(bot.user.name)
-    print(bot.user.id)
-    print('------')
-
+#     print('Logged in as')
+#     print(bot.user.name)
+#     print(bot.user.id)
+#     print('------')
 
 if __name__ == '__main__':
-    run_bot()
+    asyncio.run(load_extensions())
+    load_dotenv(find_dotenv())
+    DISCORD_TOKEN = os.getenv('DISCORD_API_TOKEN')
+    bot.run(DISCORD_TOKEN)

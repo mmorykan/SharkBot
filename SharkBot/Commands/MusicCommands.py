@@ -52,3 +52,7 @@ class MusicCommands(Audio):
     @commands.command()
     async def disconnect(self, ctx):
         await self.music.disconnect(ctx)
+
+
+async def setup(bot):
+    await bot.add_cog(MusicCommands(bot))

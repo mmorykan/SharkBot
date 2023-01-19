@@ -35,3 +35,7 @@ class SoundClipsCommands(Audio):
     @commands.command()
     async def birthday(self, ctx):
         await ctx.send('HAPPY BIRTHDAY LIL REY!!', tts=True)
+
+
+async def setup(bot):
+    await bot.add_cog(SoundClipsCommands(bot))

@@ -43,7 +43,7 @@ class Music:
         """Connect voice client to channel, convert url to source, add source to queue"""
 
         await self.connect(ctx)
-        await ctx.trigger_typing()
+        await ctx.typing()
         source = await FromSource.get_source(ctx, query, self.get_correct_guild(ctx).volume)
         msg = ['Queued in front: ', 'Queued by: '] if put_front else ['Queued: ', 'Queued by: ']
         await self.add_to_queue(ctx, source, msg, put_front)
@@ -68,7 +68,7 @@ class Music:
         ctx, guild = kwargs['ctx'], kwargs['guild']
         current_song = guild.get_current_song()
         if current_song and current_song.data['webpage_url']:  # Cannot replay quotes
-            await ctx.trigger_typing()
+            await ctx.typing()
             source = await current_song.get_source(ctx, current_song.data['query'], guild.volume)
             await self.add_to_queue(ctx, source, ['Replay: ', 'Requested by: '], True)
             return True

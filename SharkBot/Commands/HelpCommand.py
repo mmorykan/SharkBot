@@ -100,3 +100,7 @@ class HelpInfo(ext.commands.Cog):
         embed.add_field(name='$help', value='Displays all available SharkBot commands', inline=False)
 
         await ctx.send(embed=embed)
+
+
+async def setup(bot):
+    await bot.add_cog(HelpInfo(bot))

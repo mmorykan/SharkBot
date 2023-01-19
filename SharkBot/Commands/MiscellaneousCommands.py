@@ -1,3 +1,4 @@
+import os
 from discord.ext import commands
 from Miscellaneous import Miscellaneous
 
@@ -49,3 +50,8 @@ class MiscellaneousCommands(commands.Cog):
     @commands.command()
     async def info(self, ctx):
         await self.misc.info(ctx)
+
+
+async def setup(bot):
+    GIPHY_TOKEN = os.getenv('GIPHY_TOKEN')
+    await bot.add_cog(MiscellaneousCommands(bot, GIPHY_TOKEN))
